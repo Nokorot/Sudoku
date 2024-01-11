@@ -10,6 +10,8 @@
 typedef uint16_t val_t;
 
 typedef struct {
+    uint16_t depth;
+
     uint32_t  width, height;
     uint32_t  range;   // = width*height; 
     val_t     *values; // len = range^2

@@ -55,6 +55,7 @@ sudoku_mask_value(sudoku_t *sudoku, uint32_t x, uint32_t y, val_t value)
 
     uint32_t range = sudoku->range;
     uint32_t idx = y*range*range + x*range + value-1;
+
     if (sudoku->map[idx] == 1)
         return 0;
 
@@ -83,6 +84,8 @@ sudoku_set_value(sudoku_t *sudoku, uint32_t x, uint32_t y, val_t value)
         return - (sudoku->values[y*range + x] != value);
     }
     sudoku->values[y*range + x] = value;
+
+
 
     // printf("# Setting %u: \n", value);
     for (int j=0; j < range; ++j) {
@@ -118,6 +121,8 @@ sudoku_init(sudoku_t *sudoku, uint32_t width, uint32_t height)
     sudoku->width = width;
     sudoku->height = height;
     uint32_t range = sudoku->range = width*height;
+    
+    sudoku->depth = 0;
 
     sudoku->values = malloc(range*range * sizeof(val_t));
     memset(sudoku->values, 0, range*range * sizeof(val_t));
@@ -134,6 +139,8 @@ sudoku_copy(sudoku_t *dst_sudoku, sudoku_t *sudoku, int new)
     dst_sudoku->width = sudoku->width;
     dst_sudoku->height = sudoku->height;
     uint32_t range = dst_sudoku->range = sudoku->range;
+
+    dst_sudoku->depth = sudoku->depth;
 
     if (new)
         dst_sudoku->values = malloc(range*range * sizeof(val_t));
@@ -186,7 +193,6 @@ sudoku_apply_to_set(sudoku_t *sudoku)
         uint32_t y = u32_astack_pop(&(sudoku->to_set));
         uint32_t x = u32_astack_pop(&(sudoku->to_set));
     
-
         if ((return_val = sudoku_set_value(sudoku, x, y, val))) {
             return return_val;
         }
@@ -289,7 +295,43 @@ sudoku_box_unique(sudoku_t *sudoku, uint32_t i, uint32_t val)
     return sudoku_set_value(sudoku, x, y, val);
 }
 
+int 
+sudoku_try_values(sudoku_t *sudoku, uint32_t i)
+{
+    uint32_t range = sudoku->range;
 
+    sudoku_t sudoku_cpy;
+    sudoku_copy(&sudoku_cpy, sudoku, 1);
+
+    for (int j=0; j<range; ++j) {
+
+        if (sudoku->map[i*range + j] != 0)
+            continue;
+        sudoku_set_value(sudoku, i % range, i / range, j+1);
+
+        // printf("@ %u, set %u\n", i, j+1);
+        // sudoku_print(sudoku);
+        int return_val = sudoku_solve(sudoku);
+        // printf(": %d\n", return_val);
+
+        if (return_val < 0) {
+            // sudoku_print(sudoku);
+            // printf(":!! \n", return_val);
+
+            sudoku_copy(sudoku, &sudoku_cpy, 0);
+            continue;
+        }
+
+        free(sudoku_cpy.values);
+        free(sudoku_cpy.map);
+        return return_val;
+    }
+
+    free(sudoku_cpy.values);
+    free(sudoku_cpy.map);
+
+    return -1;
+}
 
 int
 sudoku_solve(sudoku_t *sudoku)
@@ -299,13 +341,9 @@ sudoku_solve(sudoku_t *sudoku)
     uint32_t width = sudoku->width;
     uint32_t height = sudoku->height;
 
-
     if ((return_val = sudoku_apply_to_set(sudoku)))
         return return_val;
 
-    sudoku_t sudoku_cpy;
-    sudoku_copy(&sudoku_cpy, sudoku, 1);
-    
     // Unique
     for (int val=1; val <= range; ++val) {
         for (int i=0; i < range; ++i) {
@@ -324,37 +362,15 @@ sudoku_solve(sudoku_t *sudoku)
         } 
     } 
 
-    // try_value
+    // Look for empty entries
     for (int i=0; i<range*range; ++i) {
         if (sudoku->values[i])
             continue;
-
-
-        for (int j=0; j<range; ++j) {
-            if (sudoku->map[i*range + j] != 0)
-                continue;
-            sudoku_set_value(sudoku, i % range, i / range, j+1);
-
-            // printf("@ %u, set %u\n", i, j+1);
-            // sudoku_print(sudoku);
-            return_val = sudoku_solve(sudoku);
-            // printf(": %d\n", return_val);
-
-            if (return_val < 0) {
-                // sudoku_print(sudoku);
-                // printf(":!! \n", return_val);
-
-                sudoku_copy(sudoku, &sudoku_cpy, 0);
-                continue;
-            }
-
-            return return_val;
-        }
-        return -1;
+ 
+        return sudoku_try_values(sudoku, i);
     }
 
-    free(sudoku_cpy.values);
-    free(sudoku_cpy.map);
+    // This is a solution
 
     return 0;
 }
