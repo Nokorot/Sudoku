@@ -15,7 +15,7 @@ u32_astack_init(u32_astack_t *stack, const uint32_t init_capacity)
 }
 
 void
-u32_astack_copy(u32_astack_t *dst_stack, u32_astack_t *stack, int new)
+u32_astack_copy(u32_astack_t *dst_stack, const u32_astack_t *stack, int new)
 {
     dst_stack->size = stack->size;
     dst_stack->capacity = stack->capacity;
@@ -28,7 +28,7 @@ void
 u32_astack_push(u32_astack_t *stack, const uint32_t value)
 {
     if (stack->size + 1 > stack->capacity)
-        stack->values = (uint32_t *) realloc(stack->values, 
+        stack->values = (uint32_t *) realloc(stack->values,
                 (1 + stack->size + stack->size / 2)*sizeof(uint32_t));
     stack->values[stack->size++] = value;
 }
@@ -43,7 +43,7 @@ u32_astack_pop(u32_astack_t *stack)
 }
 
 int
-load_file(char *filepath, file_buffer *buff)
+load_file(const char *filepath, file_buffer *buff)
 {
     FILE *file;
     int64_t file_size;

@@ -11,7 +11,7 @@ typedef uint16_t val_t;
 
 typedef struct {
     uint32_t  width, height;
-    uint32_t  range;   // = width*height; 
+    uint32_t  range;   // = width*height;
     val_t     *values; // len = range^2
     uint8_t   *map;    // range^3;
 

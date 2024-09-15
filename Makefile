@@ -2,30 +2,25 @@
 PRGNAME = sudoku
 
 CC = gcc
-CFLAGS = -g3 -O0 -Wall -pedantic
-# LDFLAGS = 
+CFLAGS = -g3 -Wfatal-errors -Wall -Wextra -Wpedantic
 
-# Files
-SRC = sudoku.c utils.c grid_print.c
-OBJ = .$(SRC:.c=.o)
+BUILD_DIR = build
 
-# Rules
-.PHONY: all, clean
+SRC = $(wildcard src/*c)
+OBJ = $(SRC:src/%.c=$(BUILD_DIR)/%.o)
+DEP = $(OBJ:%.o=%.d)
 
-all: sudoku
+$(PRGNAME): $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS)
 
-sudoku: $(OBJ)
-	$(CC) -o $@ $(LDFLAGS) $(OBJ)
+$(BUILD_DIR)/%.o: src/%.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) -o $@ $< $(CFLAGS) -c -MMD
 
-.sudoku.o: sudoku.c utils.h
-	$(CC) -c $(CFLAGS) -o $@ $<
+-include $(DEP)
 
-.utils.o: utils.c utils.h
-	$(CC) -c $(CFLAGS) -o $@ $<
-
-.grid_print.o: grid_print.c grid_print.h
-	$(CC) -c $(CFLAGS) -o $@ $<
+.PHONY: clean
 
 clean:
-	rm -f $(PRGNAME) $(OBJ)
+	rm -f $(PRGNAME) $(OBJ) .depend.mk
 

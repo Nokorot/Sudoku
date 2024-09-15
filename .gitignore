@@ -1,2 +1,4 @@
 *.o
 sudoku
+.session.vim
+compile_flags.txt
