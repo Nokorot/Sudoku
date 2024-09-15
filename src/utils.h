@@ -14,6 +14,7 @@ typedef struct {
 void u32_astack_init(u32_astack_t *stack, const uint32_t init_size);
 void u32_astack_copy(u32_astack_t *dst_stack, const u32_astack_t *stack, int _new);
 void u32_astack_push(u32_astack_t *stack, const uint32_t value);
+void u32_astack_reset(u32_astack_t *stack);
 uint32_t u32_astack_pop(u32_astack_t *stack);
 
 

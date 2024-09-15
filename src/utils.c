@@ -27,10 +27,18 @@ u32_astack_copy(u32_astack_t *dst_stack, const u32_astack_t *stack, int new)
 void
 u32_astack_push(u32_astack_t *stack, const uint32_t value)
 {
-    if (stack->size + 1 > stack->capacity)
+    if (stack->size + 1 > stack->capacity) {
         stack->values = (uint32_t *) realloc(stack->values,
                 (1 + stack->size + stack->size / 2)*sizeof(uint32_t));
+        stack->capacity = (1 + stack->size + stack->size / 2);
+    }
     stack->values[stack->size++] = value;
+}
+
+void
+u32_astack_reset(u32_astack_t *stack)
+{
+    free(stack->values);
 }
 
 uint32_t
