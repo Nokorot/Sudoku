@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <cstdint>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -134,7 +135,7 @@ sudoku_init(sudoku_t *sudoku, uint32_t width, uint32_t height)
 }
 
 void
-sudoku_copy(sudoku_t *dst_sudoku, sudoku_t *sudoku, int new)
+sudoku_copy(sudoku_t *dst_sudoku, const sudoku_t *sudoku, int new)
 {
     dst_sudoku->width = sudoku->width;
     dst_sudoku->height = sudoku->height;
@@ -154,7 +155,7 @@ sudoku_copy(sudoku_t *dst_sudoku, sudoku_t *sudoku, int new)
 }
 
 void
-sudoku_load_from_file(sudoku_t *sudoku, char *filepath)
+sudoku_load_from_file(sudoku_t *sudoku, const char *filepath)
 {
     file_buffer fb;
     if (load_file(filepath, &fb)) {
@@ -295,8 +296,8 @@ sudoku_box_unique(sudoku_t *sudoku, uint32_t i, uint32_t val)
     return sudoku_set_value(sudoku, x, y, val);
 }
 
-int 
-sudoku_try_values(sudoku_t *sudoku, uint32_t i)
+void 
+sudoku_try_values(sudoku_t *sudoku, uint32_t i, int *solutions, int max_solutions)
 {
     uint32_t range = sudoku->range;
 
@@ -311,30 +312,34 @@ sudoku_try_values(sudoku_t *sudoku, uint32_t i)
 
         // printf("@ %u, set %u\n", i, j+1);
         // sudoku_print(sudoku);
-        int return_val = sudoku_solve(sudoku);
+        sudoku_solve(sudoku, solutions, max_solutions);
+    
+        if (*solutions > max_solutions)
+            return;
+
         // printf(": %d\n", return_val);
 
-        if (return_val < 0) {
+        // if (return_val < 0) {
             // sudoku_print(sudoku);
             // printf(":!! \n", return_val);
 
-            sudoku_copy(sudoku, &sudoku_cpy, 0);
-            continue;
-        }
+        sudoku_copy(sudoku, &sudoku_cpy, 0);
+        continue;
+        // }
 
-        free(sudoku_cpy.values);
-        free(sudoku_cpy.map);
-        return return_val;
+        // free(sudoku_cpy.values);
+        // free(sudoku_cpy.map);
+        // return return_val;
     }
 
     free(sudoku_cpy.values);
     free(sudoku_cpy.map);
 
-    return -1;
+    return;
 }
 
 int
-sudoku_solve(sudoku_t *sudoku)
+sudoku_solve(sudoku_t *sudoku, int *solutions, int max_solutions)
 {
     int return_val; 
     uint32_t range = sudoku->range;
@@ -342,7 +347,7 @@ sudoku_solve(sudoku_t *sudoku)
     uint32_t height = sudoku->height;
 
     if ((return_val = sudoku_apply_to_set(sudoku)))
-        return return_val;
+        return return_val >= 0;
 
     // Unique
     for (int val=1; val <= range; ++val) {
@@ -352,13 +357,13 @@ sudoku_solve(sudoku_t *sudoku)
 
             int return_val;
             if ((return_val = sudoku_row_unique(sudoku, i, val))) 
-                return return_val;
+                return return_val >= 0;
 
             if ((return_val = sudoku_col_unique(sudoku, i, val))) 
-                return return_val;
+                return return_val >= 0;
 
             if ((return_val = sudoku_box_unique(sudoku, i, val))) 
-                return return_val;
+                return return_val >= 0;
         } 
     } 
 
@@ -367,16 +372,19 @@ sudoku_solve(sudoku_t *sudoku)
         if (sudoku->values[i])
             continue;
  
-        return sudoku_try_values(sudoku, i);
+        sudoku_try_values(sudoku, i, solutions, max_solutions);
+        // return *solutions;
+        return 0;
     }
 
     // This is a solution
-
+    sudoku_print(sudoku);
+    (*solutions)++;
     return 0;
 }
 
 void
-sudoku_print(sudoku_t *sudoku)
+sudoku_print(const sudoku_t *sudoku)
 {
     text_grid grid;
     gird_print_init(&grid, sudoku->height, sudoku->range);
@@ -414,18 +422,90 @@ sudoku_print(sudoku_t *sudoku)
     grid_print(&grid);
 }
 
+typedef struct {
+    uint32_t x, y;
+    uint32_t value;
+} entry_value_t;
+
+void 
+random_entry_value(sudoku_t *sudoku, ) 
+{
+    uint32_t range = sudoku->range;
+    
+    uint32_t empty_entry_count = 0;
+    for (int i=0; i<range*range; ++i) {
+        if (sudoku->values[i] == 0)
+            ++empty_entry_count;
+    
+    uint32_t entry = rand() % empty_entry_count;
+
+
+
+    for (int j=0; j<range; ++j) {
+        if (sudoku->map[i*range + j] != 0)
+            continue;
+        sudoku_set_value(sudoku, i % range, i / range, j+1);
+
+        // printf("@ %u, set %u\n", i, j+1);
+        // sudoku_print(sudoku);
+        sudoku_solve(sudoku, solutions, max_solutions);
+    
+        if (*solutions > max_solutions)
+            return;
+
+        // printf(": %d\n", return_val);
+
+        // if (return_val < 0) {
+            // sudoku_print(sudoku);
+            // printf(":!! \n", return_val);
+
+        sudoku_copy(sudoku, &sudoku_cpy, 0);
+        continue;
+        // }
+
+        // free(sudoku_cpy.values);
+        // free(sudoku_cpy.map);
+        // return return_val;
+    }
+
+}
+
+
 
 int main(int argc, char **argv) {
     sudoku_t sudoku;
-    sudoku_load_from_file(&sudoku, "a3.su");
+
+    darray_t entries;
+    darray_init(&entries, sizeof(entry_value_t), 4);
+
+
+    
+
+}
+
+
+
+
+
+
+int main2(int argc, char **argv) {
+    sudoku_t sudoku;
+    sudoku_load_from_file(&sudoku, "test.su");
 
     printf("Initial: \n");
     sudoku_print(&sudoku);
-    int k = sudoku_solve(&sudoku);
-    printf("%d\n", k);
+    int solutions = 0;
+    int k = sudoku_solve(&sudoku, &solutions, 500);
 
-    printf("Solved: \n");
-    sudoku_print(&sudoku);
+    if (solutions > 500)
+        printf("> 500, (%u found)\n", solutions);
+    else
+        printf("%u\n", solutions);
+
+    // if (solutions == 1) {
+    //     printf("Solved: \n");
+    //     sudoku_print(&sudoku);
+    // }
 
     free(sudoku.values);
     free(sudoku.map);

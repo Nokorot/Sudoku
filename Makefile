@@ -28,4 +28,3 @@ sudoku: $(OBJ)
 
 clean:
 	rm -f $(PRGNAME) $(OBJ)
-

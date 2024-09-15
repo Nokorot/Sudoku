@@ -21,12 +21,12 @@ typedef struct {
 } sudoku_t;
 
 void sudoku_init(sudoku_t *sudoku, uint32_t width, uint32_t height);
-void sudoku_copy(sudoku_t *dst_sudoku, sudoku_t *sudoku, int _new);
-void sudoku_load_from_file(sudoku_t *sudoku, char *filepath);
-void sudoku_print(sudoku_t *sudoku);
+void sudoku_copy(sudoku_t *dst_sudoku, const sudoku_t *sudoku, int _new);
+void sudoku_load_from_file(sudoku_t *sudoku, const char *filepath);
+void sudoku_print(sudoku_t const *sudoku);
 int  sudoku_mask_value(sudoku_t *sudoku, uint32_t x, uint32_t y, val_t value);
 int  sudoku_set_value(sudoku_t *sudoku, uint32_t x, uint32_t y, val_t value);
 int  sudoku_check_square(sudoku_t *sudoku, uint32_t x, uint32_t y);
-int  sudoku_solve(sudoku_t *sudoku);
+int  sudoku_solve(sudoku_t *sudoku, int *solutions, int max_solutions);
 
 #endif
