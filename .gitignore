@@ -1,4 +1,6 @@
 *.o
+*.d
+build
 sudoku
 .session.vim
 compile_flags.txt
